@@ -259,7 +259,8 @@ class QueueManager:
         """
         Get available work units that aren't being processed.
         For representation tasks, only returns work units with accumulated tokens
-        >= REPRESENTATION_BATCH_MAX_TOKENS (forced batching), unless FLUSH_ENABLED is True.
+        >= REPRESENTATION_BATCH_MAX_TOKENS or with an oldest item older than
+        REPRESENTATION_BATCH_MAX_AGE_SECONDS, unless FLUSH_ENABLED is True.
         Returns a dict mapping work_unit_key to aqs_id.
         """
         limit: int = max(0, self.workers - self.get_total_owned_work_units())
@@ -267,6 +268,7 @@ class QueueManager:
             return {}
 
         batch_max_tokens = settings.DERIVER.REPRESENTATION_BATCH_MAX_TOKENS
+        batch_max_age_seconds = settings.DERIVER.REPRESENTATION_BATCH_MAX_AGE_SECONDS
 
         async with tracked_db("get_available_work_units") as db:
             representation_prefix = "representation:"
@@ -274,6 +276,7 @@ class QueueManager:
                 select(
                     models.QueueItem.work_unit_key,
                     func.sum(models.Message.token_count).label("total_tokens"),
+                    func.min(models.QueueItem.created_at).label("oldest_created_at"),
                 )
                 .join(
                     models.Message,
@@ -311,13 +314,24 @@ class QueueManager:
 
             # Apply batch threshold filter (skip if FLUSH_ENABLED is True)
             if not settings.DERIVER.FLUSH_ENABLED and batch_max_tokens > 0:
+                representation_batch_ready_conditions = [
+                    func.coalesce(token_stats_subq.c.total_tokens, 0)
+                    >= batch_max_tokens
+                ]
+                if batch_max_age_seconds > 0:
+                    batch_age_cutoff = datetime.now(timezone.utc) - timedelta(
+                        seconds=batch_max_age_seconds
+                    )
+                    representation_batch_ready_conditions.append(
+                        token_stats_subq.c.oldest_created_at <= batch_age_cutoff
+                    )
+
                 query = query.where(
                     or_(
                         ~work_units_subq.c.work_unit_key.startswith(
                             representation_prefix
                         ),
-                        func.coalesce(token_stats_subq.c.total_tokens, 0)
-                        >= batch_max_tokens,
+                        or_(*representation_batch_ready_conditions),
                     )
                 )
 

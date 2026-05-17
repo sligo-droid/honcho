@@ -78,6 +78,16 @@ class _EmbeddingClient:
         return self.transport
 
     def _validate_embedding_dimensions(self, embedding: list[float]) -> list[float]:
+        if len(embedding) > self.vector_dimensions and self.send_dimensions:
+            logger.warning(
+                "Embedding provider returned %d dimensions after requesting %d; "
+                "truncating response for %s:%s.",
+                len(embedding),
+                self.vector_dimensions,
+                self.transport,
+                self.model,
+            )
+            return embedding[: self.vector_dimensions]
         if len(embedding) != self.vector_dimensions:
             raise ValueError(
                 f"Embedding dimension mismatch for {self.transport}:{self.model}. "

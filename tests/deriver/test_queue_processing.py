@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import patch
 
@@ -1200,6 +1201,112 @@ class TestQueueProcessing:
         # Now the work unit should be claimable (tokens exceed threshold)
         claimed2 = await qm.get_and_claim_work_units()
         assert rep_work_unit_key in claimed2
+
+    @pytest.mark.asyncio
+    async def test_forced_batching_claims_low_token_work_after_max_age(
+        self,
+        db_session: AsyncSession,
+        sample_session_with_peers: tuple[models.Session, list[models.Peer]],
+        create_queue_payload: Callable[..., Any],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings.DERIVER, "FLUSH_ENABLED", False)
+        monkeypatch.setattr(settings.DERIVER, "REPRESENTATION_BATCH_MAX_AGE_SECONDS", 60)
+
+        session, peers = sample_session_with_peers
+        peer = peers[0]
+
+        message = models.Message(
+            session_name=session.name,
+            workspace_name=session.workspace_name,
+            peer_name=peer.name,
+            content="Short aged message",
+            token_count=10,
+            seq_in_session=1,
+        )
+        db_session.add(message)
+        await db_session.commit()
+        await db_session.refresh(message)
+
+        payload = create_queue_payload(
+            message=message,
+            task_type="representation",
+            observed=peer.name,
+            observer=peer.name,
+        )
+        work_unit_key = construct_work_unit_key(session.workspace_name, payload)
+
+        queue_item = models.QueueItem(
+            session_id=session.id,
+            task_type="representation",
+            work_unit_key=work_unit_key,
+            payload=payload,
+            processed=False,
+            workspace_name=session.workspace_name,
+            message_id=message.id,
+            created_at=datetime.now(timezone.utc) - timedelta(seconds=61),
+        )
+        db_session.add(queue_item)
+        await db_session.commit()
+
+        qm = QueueManager()
+
+        claimed = await qm.get_and_claim_work_units()
+
+        assert work_unit_key in claimed
+
+    @pytest.mark.asyncio
+    async def test_forced_batching_age_flush_can_be_disabled(
+        self,
+        db_session: AsyncSession,
+        sample_session_with_peers: tuple[models.Session, list[models.Peer]],
+        create_queue_payload: Callable[..., Any],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings.DERIVER, "FLUSH_ENABLED", False)
+        monkeypatch.setattr(settings.DERIVER, "REPRESENTATION_BATCH_MAX_AGE_SECONDS", 0)
+
+        session, peers = sample_session_with_peers
+        peer = peers[0]
+
+        message = models.Message(
+            session_name=session.name,
+            workspace_name=session.workspace_name,
+            peer_name=peer.name,
+            content="Short old message",
+            token_count=10,
+            seq_in_session=1,
+        )
+        db_session.add(message)
+        await db_session.commit()
+        await db_session.refresh(message)
+
+        payload = create_queue_payload(
+            message=message,
+            task_type="representation",
+            observed=peer.name,
+            observer=peer.name,
+        )
+        work_unit_key = construct_work_unit_key(session.workspace_name, payload)
+
+        queue_item = models.QueueItem(
+            session_id=session.id,
+            task_type="representation",
+            work_unit_key=work_unit_key,
+            payload=payload,
+            processed=False,
+            workspace_name=session.workspace_name,
+            message_id=message.id,
+            created_at=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+        db_session.add(queue_item)
+        await db_session.commit()
+
+        qm = QueueManager()
+
+        claimed = await qm.get_and_claim_work_units()
+
+        assert work_unit_key not in claimed
 
     @pytest.mark.asyncio
     async def test_forced_batching_single_large_message(

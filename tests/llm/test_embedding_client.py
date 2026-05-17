@@ -93,6 +93,42 @@ async def test_openai_embedding_client_rejects_dimension_mismatch(
 
 
 @pytest.mark.asyncio
+async def test_openai_embedding_client_truncates_when_dimensions_were_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, fake = _build_openai_client(
+        monkeypatch,
+        embedding=[float(i) for i in range(10)],
+        model="qwen3-embedding",
+        send_dimensions=True,
+        vector_dimensions=8,
+    )
+
+    embedding = await client.embed("hello")
+
+    assert embedding == [float(i) for i in range(8)]
+    assert fake.calls == [
+        {"model": "qwen3-embedding", "input": ["hello"], "dimensions": 8}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_openai_embedding_client_rejects_extra_dimensions_when_not_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _fake = _build_openai_client(
+        monkeypatch,
+        embedding=[float(i) for i in range(10)],
+        model="qwen3-embedding",
+        send_dimensions=False,
+        vector_dimensions=8,
+    )
+
+    with pytest.raises(ValueError, match="Embedding dimension mismatch"):
+        await client.embed("hello")
+
+
+@pytest.mark.asyncio
 async def test_gemini_embedding_client_uses_output_dimensionality(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -777,6 +777,11 @@ class DeriverSettings(HonchoSettings):
         Field(default=1024, ge=128, le=16_384),
     ] = 1024
 
+    REPRESENTATION_BATCH_MAX_AGE_SECONDS: Annotated[
+        int,
+        Field(default=300, ge=0, le=24 * 3600),
+    ] = 300
+
     # When enabled, bypasses the batch token threshold and processes work immediately
     FLUSH_ENABLED: bool = False
 
