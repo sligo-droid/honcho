@@ -113,6 +113,7 @@ def select_model_config_for_attempt(
         frequency_penalty=fb.frequency_penalty,
         presence_penalty=fb.presence_penalty,
         seed=fb.seed,
+        service_tier=fb.service_tier,
         thinking_effort=fb.thinking_effort,
         thinking_budget_tokens=fb.thinking_budget_tokens,
         provider_params=fb.provider_params,

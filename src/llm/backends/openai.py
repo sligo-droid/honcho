@@ -316,6 +316,7 @@ class OpenAIBackend:
                 "frequency_penalty",
                 "presence_penalty",
                 "seed",
+                "service_tier",
             ):
                 if key in extra_params:
                     params[key] = extra_params[key]

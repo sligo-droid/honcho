@@ -480,6 +480,7 @@ Examples:
 - `AUTH_JWT_SECRET` - JWT secret key
 - `DERIVER_MODEL_CONFIG__TRANSPORT` - Transport for the background deriver
 - `SUMMARY_MODEL_CONFIG__MODEL` - Summary model override
+- `DIALECTIC_LEVELS__high__MODEL_CONFIG__SERVICE_TIER` - OpenAI service tier for high reasoning level
 - `DIALECTIC_LEVELS__low__MODEL_CONFIG__MODEL` - Model for low reasoning level
 - `LOG_LEVEL` - Application log level
 - `METRICS_ENABLED` - Enable Prometheus metrics

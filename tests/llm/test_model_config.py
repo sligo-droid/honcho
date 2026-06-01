@@ -108,6 +108,7 @@ def test_summary_settings_accept_nested_model_config() -> None:
             fallback=FallbackModelSettings(
                 model="gemini-2.5-pro",
                 transport="gemini",
+                service_tier="flex",
             ),
             thinking_budget_tokens=1024,
         ),
@@ -129,6 +130,7 @@ def test_resolve_model_config_reads_override_env_and_provider_params(
     configured = ConfiguredModelSettings(
         model="my-local-model",
         transport="openai",
+        service_tier="priority",
         overrides=ModelOverrideSettings(
             api_key_env="SUMMARY_LOCAL_API_KEY",
             base_url="http://localhost:8000/v1",
@@ -140,6 +142,7 @@ def test_resolve_model_config_reads_override_env_and_provider_params(
 
     assert resolved.api_key == "test-key"
     assert resolved.base_url == "http://localhost:8000/v1"
+    assert resolved.service_tier == "priority"
     assert resolved.provider_params == {"verbosity": "low"}
 
 
@@ -173,6 +176,7 @@ def test_dialectic_level_settings_accepts_nested_model_config() -> None:
             fallback=FallbackModelSettings(
                 model="gemini-2.5-pro",
                 transport="gemini",
+                service_tier="flex",
             ),
             thinking_budget_tokens=1024,
         ),
@@ -185,6 +189,7 @@ def test_dialectic_level_settings_accepts_nested_model_config() -> None:
     assert resolved.fallback is not None
     assert resolved.fallback.model == "gemini-2.5-pro"
     assert resolved.fallback.transport == "gemini"
+    assert resolved.fallback.service_tier == "flex"
 
 
 def test_dialectic_level_settings_require_nested_model_config() -> None:

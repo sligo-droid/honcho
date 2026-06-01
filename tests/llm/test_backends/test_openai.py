@@ -44,6 +44,7 @@ async def test_openai_backend_uses_gpt5_params_and_extracts_reasoning() -> None:
         messages=[{"role": "user", "content": "Hello"}],
         max_tokens=100,
         thinking_effort="high",
+        extra_params={"service_tier": "priority"},
     )
 
     assert result.content == "Hello from GPT-5"
@@ -60,6 +61,7 @@ async def test_openai_backend_uses_gpt5_params_and_extracts_reasoning() -> None:
     assert call["model"] == "gpt-5-mini"
     assert call["max_completion_tokens"] == 100
     assert call["reasoning_effort"] == "high"
+    assert call["service_tier"] == "priority"
     assert "max_tokens" not in call
 
 

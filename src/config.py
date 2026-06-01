@@ -60,6 +60,7 @@ TOML_CONFIG = load_toml_config()
 ThinkingEffortLevel = Literal[
     "none", "minimal", "low", "medium", "high", "xhigh", "max"
 ]
+ServiceTier = Literal["auto", "default", "flex", "priority"]
 
 
 class ModelOverrideSettings(BaseModel):
@@ -129,6 +130,7 @@ class FallbackModelSettings(BaseModel):
     frequency_penalty: float | None = None
     presence_penalty: float | None = None
     seed: int | None = None
+    service_tier: ServiceTier | None = None
 
     thinking_effort: ThinkingEffortLevel | None = Field(
         default=None,
@@ -172,6 +174,7 @@ class ConfiguredModelSettings(BaseModel):
     frequency_penalty: float | None = None
     presence_penalty: float | None = None
     seed: int | None = None
+    service_tier: ServiceTier | None = None
 
     thinking_effort: ThinkingEffortLevel | None = Field(
         default=None,
@@ -217,6 +220,7 @@ class ResolvedFallbackConfig(BaseModel):
     frequency_penalty: float | None = None
     presence_penalty: float | None = None
     seed: int | None = None
+    service_tier: ServiceTier | None = None
 
     thinking_effort: ThinkingEffortLevel | None = Field(
         default=None,
@@ -252,6 +256,7 @@ class ModelConfig(BaseModel):
     frequency_penalty: float | None = None
     presence_penalty: float | None = None
     seed: int | None = None
+    service_tier: ServiceTier | None = None
 
     thinking_effort: ThinkingEffortLevel | None = Field(
         default=None,
@@ -392,6 +397,7 @@ def _resolve_fallback_config(
         frequency_penalty=fallback.frequency_penalty,
         presence_penalty=fallback.presence_penalty,
         seed=fallback.seed,
+        service_tier=fallback.service_tier,
         thinking_effort=fallback.thinking_effort,
         thinking_budget_tokens=fallback.thinking_budget_tokens,
         provider_params=fallback.overrides.provider_params,
@@ -425,6 +431,7 @@ def resolve_model_config(configured: ConfiguredModelSettings) -> ModelConfig:
         frequency_penalty=configured.frequency_penalty,
         presence_penalty=configured.presence_penalty,
         seed=configured.seed,
+        service_tier=configured.service_tier,
         thinking_effort=configured.thinking_effort,
         thinking_budget_tokens=configured.thinking_budget_tokens,
         provider_params=configured.overrides.provider_params,
