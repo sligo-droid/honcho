@@ -82,6 +82,7 @@ async def test_provider_params_are_merged_into_extra_params(
         model="gpt-4.1-mini",
         transport="openai",
         top_p=0.9,
+        service_tier="priority",
         provider_params={"custom_flag": True},
     )
 
@@ -94,4 +95,5 @@ async def test_provider_params_are_merged_into_extra_params(
 
     call = fake_backend.calls[0]
     assert call["extra_params"]["top_p"] == 0.9
+    assert call["extra_params"]["service_tier"] == "priority"
     assert call["extra_params"]["custom_flag"] is True

@@ -34,6 +34,8 @@ def build_config_extra_params(config: ModelConfig) -> dict[str, Any]:
         extra_params["presence_penalty"] = config.presence_penalty
     if config.seed is not None:
         extra_params["seed"] = config.seed
+    if config.service_tier is not None:
+        extra_params["service_tier"] = config.service_tier
 
     if config.provider_params:
         extra_params.update(config.provider_params)

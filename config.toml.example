@@ -57,6 +57,8 @@ MAX_MESSAGE_CONTENT_CHARS = 2000  # Max chars per message in tool results
 # Base URLs are set per-module via model_config.overrides.base_url
 # Built-in text-generation defaults use openai / gpt-5.4-mini.
 # Embeddings default to openai / text-embedding-3-small.
+# OpenAI service tier can be set on any text model_config with
+# service_tier = "priority" # auto, default, flex, or priority.
 OPENAI_API_KEY = "your-api-key-here"
 # ANTHROPIC_API_KEY = "your-api-key"
 # GEMINI_API_KEY = "your-api-key"
@@ -95,6 +97,7 @@ FLUSH_ENABLED = false  # Bypass batch token threshold, process work immediately
 transport = "openai"
 model = "gpt-5.4-mini"
 # temperature = 0.0
+# service_tier = "priority"
 # thinking_effort = "minimal"
 # thinking_budget_tokens = 1024
 # max_output_tokens = 4096
